@@ -3,67 +3,105 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Generador de CSV para uMap</title>
+    <title>cheLA BioCulturas</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-omnivore@0.3.4/leaflet-omnivore.min.js"></script>
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        form { margin-bottom: 20px; }
-        label { display: block; margin-top: 10px; }
-        input { padding: 5px; width: 100%; max-width: 400px; }
-        button { margin-top: 10px; padding: 8px 12px; cursor: pointer; }
+        body { font-family: Arial, sans-serif; text-align: center; }
+        #map { height: 500px; width: 80%; margin: auto; border: 2px solid #333; border-radius: 10px; }
+        #miniMap { height: 250px; width: 80%; margin: auto; border: 2px solid #333; border-radius: 10px; }
+        form { margin: 20px auto; width: 80%; background: #f4f4f4; padding: 15px; border-radius: 8px; text-align: left; }
+        label { font-weight: bold; }
+        input, button { display: block; margin: 5px 0; width: 100%; }
+        .description { font-size: 12px; color: #555; text-align: justify; margin-bottom: 10px; }
+        button { background: #007bff; color: white; border: none; padding: 10px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .logo { margin-top: 20px; display: flex; justify-content: center; gap: 20px; align-items: center; }
+        .logo img { width: 100px; }
     </style>
 </head>
 <body>
-    <h2>Formulario para un mapa Colectivo</h2>
+    <h2>PLATAFORMA (en desarrollo) LAS CUENCAS CUENTAN</h2>
+    <div id="map"></div>
     <form id="dataForm">
         <label>Nombre: <input type="text" id="name" required></label>
+        <div class="description">Ingrese el nombre del punto en el mapa.</div>
         <label>Descripción: <input type="text" id="description"></label>
+        <div class="description">Breve descripción del punto.</div>
+        <label>Imagen (URL): <input type="text" id="image"></label>
+        <div class="description">Ingrese la URL de una imagen asociada (ejemplo: https://image.url.com).</div>
+        <label>Audio (URL): <input type="text" id="audio"></label>
+        <div class="description">Ingrese la URL de un archivo de audio (ejemplo: https://audio.url.com).</div>
+        <label>Video (URL): <input type="text" id="video"></label>
+        <div class="description">Ingrese la URL de un video en línea (ejemplo: https://video.url.com).</div>
+        <label>Archivo KML (URL): <input type="text" id="kml"></label>
+        <div class="description">Ingrese la URL de un archivo KML para agregarlo al mapa.</div>
+        <label>Enlace extra: <input type="text" id="link"></label>
+        <div class="description">Ingrese un enlace adicional relacionado al punto.</div>
         <label>Latitud: <input type="text" id="latitude" required></label>
         <label>Longitud: <input type="text" id="longitude" required></label>
-        <label>Imagen (URL): <input type="text" id="image"></label>
-        <label>Audio (URL): <input type="text" id="audio"></label>
-        <label>Enlace extra: <input type="text" id="link"></label>
-        <button type="button" onclick="addData()">Agregar Punto</button>
+        <div class="description">Haga clic en el mapa de referencia para obtener latitud y longitud.</div>
+        <div id="miniMap"></div>
+        <button type="button" onclick="addMarker()">Agregar Punto</button>
+        <button type="button" onclick="downloadCSV()">Descargar CSV</button>
+        <div class="description" style="margin-top: 20px; font-weight: bold;">Se recomienda utilizar <a href="https://archive.org/" target="_blank">archive.org</a> para alojar archivos y obtener URLs directas para su inclusión en el mapa.</div>
     </form>
-    <button onclick="downloadCSV()">Descargar CSV</button>
+    <div class="logo">
+        <img src="http://pedaludico.org/tiki-download_file.php?fileId=253" alt="cheLA">
+        <img src="https://chela.org.ar/wp-content/uploads/2023/09/logo-williams.png" alt="Fundación Williams">
+        <img src="https://chela.org.ar/wp-content/uploads/2024/10/logo-metabolic.png" alt="Metabolic Studio">
+        <img src="https://app.fnartes.gob.ar/images/logo_fna.png" alt="FNA">
+    </div>
     <script>
+        let map = L.map('map').setView([-38.4161, -63.6167], 5);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        let miniMap = L.map('miniMap').setView([-34.6037, -58.3816], 2);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(miniMap);
+
+        miniMap.on('click', function(e) {
+            document.getElementById('latitude').value = e.latlng.lat.toFixed(6);
+            document.getElementById('longitude').value = e.latlng.lng.toFixed(6);
+        });
+
         let data = [['name', 'description', 'latitude', 'longitude']];
-        
-        function addData() {
+
+        function addMarker() {
             let name = document.getElementById("name").value;
             let description = document.getElementById("description").value;
-            let latitude = document.getElementById("latitude").value;
-            let longitude = document.getElementById("longitude").value;
+            let latitude = parseFloat(document.getElementById("latitude").value);
+            let longitude = parseFloat(document.getElementById("longitude").value);
             let image = document.getElementById("image").value;
-            let link = document.getElementById("link").value;
             let audio = document.getElementById("audio").value;
+            let video = document.getElementById("video").value;
+            let link = document.getElementById("link").value;
+            let kml = document.getElementById("kml").value;
             
             let formattedDescription = description;
             if (image) {
-                formattedDescription += ` {{${image}|440}}`;
+                formattedDescription += ` <br><img src='${image}' width='800' style='max-width: 100%;'>`;
             }
             if (audio) {
-                formattedDescription += ` [[${audio}]]`;
+                formattedDescription += ` <br><audio controls><source src='${audio}' type='audio/mpeg'></audio>`;
+            }
+            if (video) {
+                formattedDescription += ` <br><iframe width='800' height='450' src='${video}' frameborder='0' allowfullscreen></iframe>`;
             }
             if (link) {
-                formattedDescription += ` [[${link}]]`;
+                formattedDescription += ` <br><a href='${link}' target='_blank'>Enlace extra</a>`;
             }
             
-            if (name && latitude && longitude) {
+            if (!isNaN(latitude) && !isNaN(longitude)) {
+                let marker = L.marker([latitude, longitude]).addTo(map);
+                marker.bindPopup(`<b>${name}</b><br>${formattedDescription}`).openPopup();
                 data.push([name, formattedDescription, latitude, longitude]);
                 alert("Punto agregado correctamente");
-            } else {
-                alert("Por favor, completa los campos requeridos");
             }
-        }
-        
-        function downloadCSV() {
-            let csvContent = "data:text/csv;charset=utf-8," + data.map(e => e.join(",")).join("\n");
-            let encodedUri = encodeURI(csvContent);
-            let link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", "puntos_umap.csv");
-            document.body.appendChild(link);
-            link.click();
         }
     </script>
 </body>
