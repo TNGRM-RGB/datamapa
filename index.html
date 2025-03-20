@@ -63,6 +63,17 @@
             document.getElementById('longitude').value = e.latlng.lng.toFixed(6);
         });
 
+        function addMarker() {
+            let lat = document.getElementById('latitude').value;
+            let lon = document.getElementById('longitude').value;
+            let name = document.getElementById('name').value;
+            let description = document.getElementById('description').value;
+            if (lat && lon) {
+                L.marker([lat, lon]).addTo(map)
+                    .bindPopup(`<b>${name}</b><br>${description}`).openPopup();
+            }
+        }
+
         async function sendToGitHub() {
             const repo = "TNGRM-RGB/formulario-umap";
             const issueTitle = "Nuevo punto en el mapa";
@@ -92,4 +103,6 @@
                 alert("Error al enviar el punto a GitHub Issues");
             }
         }
-    <
+    </script>
+</body>
+</html>
