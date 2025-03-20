@@ -1,0 +1,51 @@
+name: Agregar Punto a GitHub Issues
+
+on:
+  workflow_dispatch:
+  repository_dispatch:
+    types: [nuevo_punto]
+
+jobs:
+  create_issue:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Crear Issue en GitHub
+        run: |
+          curl -X POST -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+          -H "Accept: application/vnd.github.v3+json" \
+          https://api.github.com/repos/TNGRM-RGB/formulario-umap/issues \
+          -d '{"title": "Nuevo punto en el mapa", "body": "Aquí irían los datos del formulario."}'
+🔹 Explicación:
+
+Se ejecuta cada vez que haya una solicitud (nuevo_punto).
+Usa secrets.GITHUB_TOKEN en lugar de escribirlo en el código.
+Envía los datos a GitHub Issues cuando el formulario se envíe.
+5. Ajustar el código en tu formulario
+Modifica la función sendToGitHub() para que dispare el evento en GitHub Actions:
+
+js
+Copy code
+async function sendToGitHub() {
+    const response = await fetch(`https://api.github.com/repos/TNGRM-RGB/formulario-umap/dispatches`, {
+        method: "POST",
+        headers: {
+            "Authorization": `token ${GITHUB_TOKEN}`,
+            "Accept": "application/vnd.github.v3+json"
+        },
+        body: JSON.stringify({
+            event_type: "nuevo_punto",
+            client_payload: {
+                nombre: document.getElementById('name').value,
+                descripcion: document.getElementById('description').value,
+                latitud: document.getElementById('latitude').value,
+                longitud: document.getElementById('longitude').value
+            }
+        })
+    });
+
+    if (response.ok) {
+        alert("Punto enviado a GitHub Issues exitosamente");
+    } else {
+        alert("Error al enviar el punto a GitHub Issues");
+    }
+}
