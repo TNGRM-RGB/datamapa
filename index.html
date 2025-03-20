@@ -63,32 +63,6 @@
             document.getElementById('longitude').value = e.latlng.lng.toFixed(6);
         });
 
-        function addMarker() {
-            let lat = document.getElementById('latitude').value;
-            let lon = document.getElementById('longitude').value;
-            let name = document.getElementById('name').value;
-            let desc = document.getElementById('description').value;
-            let img = document.getElementById('image').value;
-            let audio = document.getElementById('audio').value;
-            let video = document.getElementById('video').value;
-            let link = document.getElementById('link').value;
-            let kml = document.getElementById('kml').value;
-
-            let content = `<b>${name}</b><br>${desc}<br>`;
-            if (img) content += `{{${img}|800}}<br>`;
-            if (audio) content += `<audio controls><source src="${audio}" type="audio/mpeg"></audio><br>`;
-            if (video) content += `<iframe src="${video}" width="800"></iframe><br>`;
-            if (link) content += `[[${link}]]<br>`;
-
-            L.marker([lat, lon]).addTo(map)
-                .bindPopup(content)
-                .openPopup();
-
-            if (kml) {
-                omnivore.kml(kml).addTo(map);
-            }
-        }
-
         async function sendToGitHub() {
             const repo = "TNGRM-RGB/formulario-umap";
             const issueTitle = "Nuevo punto en el mapa";
@@ -106,7 +80,7 @@
             const response = await fetch(`https://api.github.com/repos/${repo}/issues`, {
                 method: "POST",
                 headers: {
-                    "Authorization": "token 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",
+                    "Authorization": `token ${UMAPTKN}`,
                     "Accept": "application/vnd.github.v3+json"
                 },
                 body: JSON.stringify({ title: issueTitle, body: issueBody })
@@ -118,6 +92,4 @@
                 alert("Error al enviar el punto a GitHub Issues");
             }
         }
-    </script>
-</body>
-</html>
+    <
