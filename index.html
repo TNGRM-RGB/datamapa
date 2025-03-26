@@ -28,11 +28,6 @@
     <form id="dataForm">
         <label>Nombre: <input type="text" id="name" required></label>
         <label>Descripción: <input type="text" id="description"></label>
-        <label>Imagen (URL): <input type="text" id="image"></label>
-        <label>Audio (URL): <input type="text" id="audio"></label>
-        <label>Video (URL): <input type="text" id="video"></label>
-        <label>Archivo KML (URL): <input type="text" id="kml"></label>
-        <label>Enlace extra: <input type="text" id="link"></label>
         <label>Latitud: <input type="text" id="latitude" required></label>
         <label>Longitud: <input type="text" id="longitude" required></label>
         <div class="description">Haga clic en el mapa de referencia para obtener latitud y longitud.</div>
@@ -63,6 +58,17 @@
             document.getElementById('longitude').value = e.latlng.lng.toFixed(6);
         });
 
+        function addMarker() {
+            let lat = document.getElementById('latitude').value;
+            let lon = document.getElementById('longitude').value;
+            let name = document.getElementById('name').value;
+            let description = document.getElementById('description').value;
+            if (lat && lon) {
+                L.marker([lat, lon]).addTo(map)
+                    .bindPopup(`<b>${name}</b><br>${description}`).openPopup();
+            }
+        }
+
         async function fetchFromGitHub() {
             const repo = "TNGRM-RGB/datamapa";
             const response = await fetch(`https://raw.githubusercontent.com/${repo}/main/puntos.json`);
@@ -86,6 +92,29 @@
                 latitud: document.getElementById('latitude').value,
                 longitud: document.getElementById('longitude').value
             };
+            
+            const response = await fetch('https://api.github.com/repos/TNGRM-RGB/datamapa/issues', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `token SECRETO_ENV`,
+                    'Accept': 'application/vnd.github.v3+json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    title: punto.nombre,
+                    body: JSON.stringify(punto, null, 2)
+                })
+            });
+            
+            if (response.ok) {
+                alert("Punto enviado a GitHub correctamente");
+            } else {
+                alert("Error al enviar el punto a GitHub");
+            }
+        }
+    </script>
+</body>
+</html>
             
             alert("Esta función requiere integración con GitHub API para escribir en el repositorio.");
         }
